@@ -10,12 +10,12 @@ Low-cost, high-throughput and accurate maize ear phenotyping system
 
 1. **Clone the repository:**
     ```bash
-    git clone https://github.com/Chimaco37/Maize-Phenotyping.git
+    git clone https://github.com/Chimaco37/Squirrel.git
     ```
 2. **Install dependencies (Only when you need to use CLI):**
 
     ```bash
-    cd Maize-Phenotyping/
+    cd Squirrel/
     pip install -r requirements.txt
     ```
 

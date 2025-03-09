@@ -91,7 +91,7 @@ Low-cost, high-throughput and accurate maize ear phenotyping system
     - **Green:** Ear rotation boundary markers
     - **Red:** Kernel row indicator
 - **Usage:**
-  - **Drag:** Use the **left mouse button** to drag and adjust a line.
+  - **Drag:** Use the **left mouse button** to drag and adjust **boundary markers**, avoid error introduced by inprecise boundary detection during video processing.
   - **Adjust Kernel Row:** **Double-click** the **left mouse button** to add or subtract kernel row number (depending on whether a kernel row indicator exists at the clicked location).
   - **Change Data Availability:** **Single-click** the **right mouse button** to change the data availability for the poorly developed ear (all availabel/kernel row 'NA'/all traits 'NA').
 

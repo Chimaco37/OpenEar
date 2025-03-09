@@ -48,7 +48,7 @@ Low-cost, high-throughput and accurate maize ear phenotyping system
       After downloading, place the GUI files in the respective ./GUI directory with these steps:
   
         ```
-        mv Lizard.exe ./GUI/
+        mv Squirrel.exe ./GUI/
         ```
 
 ## GUI Usage
@@ -59,48 +59,41 @@ Low-cost, high-throughput and accurate maize ear phenotyping system
 ## Key Functions
 
 ### 1. Video Processing
-- **Purpose:** Process raw videos and corresponding height data to generate maize plant composite images.
+- **Purpose:** Unroll the maize ear surface by processing video into projection image and extract frames for ear-level traits extraction.
 - **Usage:**
   1. Click the **Video Process** button.
   2. **Confirm the operation** when prompted.
   3. Select the following folders:
      - **Input Videos:** Folder containing raw video files (e.g., `.mp4`, `.avi`).
-     - **Height Files:** Folder with corresponding height data.
-     - **Composition Output:** Destination folder for the generated composite images.
+     - **Output image folder:** Destination folder for the generated projection and ear images.
+     - **Model folder:** Folder that contains the image process parameters folder. 
   4. Specify the **number of threads** based on your device's capabilities.
   5. The system processes the videos accordingly.
-- **Notes:**
-  - **After processing, the original video and height files will be backed up in a folder named `raw` within their original directories.**
-  - **Processed files will be stored in a `processed` folder.**
-  - **Ensure that the height files in the `processed` folder are used for model inference, data analysis.**
----
 
 ### 2. Model Inference
-- **Purpose:** Run the model to analyze composite images and height data, then generate phenotypic measurements.
+- **Purpose:** Run the model to analyze projection and ear images, then generate phenotypic measurements.
 - **Usage:**
   1. Click the **Model Inference** button.
   2. **Confirm the operation** when prompted.
   3. Choose the **device** for inference (GPU or CPU).
   4. Select the following folders:
-     - **Height Files:** Folder containing the height data.
-     - **Composite Images:** Folder containing the processed composite images.
+     - **Image folder:** Folder containing the projection and ear images folder.
      - **Model Folder:** Directory where the model files are stored.
      - **Output Folder:** Destination for the generated phenotypic data.
   5. The system then runs inference and outputs the phenotypic measurements.
-
+  
 ---
 
 ### 3. Manual Adjustment of Results
 - **Purpose:** Fine-tune model predictions by manually adjusting key phenotypic positions on images.
 - **Features:**
   - **Colored Lines Indicate:**
-    - **Green:** Tassel height
-    - **Blue:** Leaf heights
-    - **Red:** Ear heights
+    - **Green:** Ear rotation boundary markers
+    - **Red:** Kernel row indicator
 - **Usage:**
   - **Drag:** Use the **left mouse button** to drag and adjust a line.
-  - **Add/Remove:** **Double-click** the **left mouse button** to add or remove a line (depending on whether a line exists at the clicked location).
-  - **Change Type:** **Single-click** the **right mouse button** to change the line’s color (i.e., its type).
+  - **Adjust Kernel Row:** **Double-click** the **left mouse button** to add or subtract kernel row number (depending on whether a kernel row indicator exists at the clicked location).
+  - **Change Data Availability:** **Single-click** the **right mouse button** to change the data availability for the poorly developed ear (all availabel/kernel row 'NA'/all traits 'NA').
 
 ---
 

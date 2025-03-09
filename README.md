@@ -54,7 +54,7 @@ Low-cost, high-throughput and accurate maize ear phenotyping system
 ## GUI Usage
 
 ### 🐿️The 'Squirrel' System
-![image](https://github.com/user-attachments/assets/b7045c19-be7b-40f4-835d-b8b99b7ed893)
+![image](https://github.com/user-attachments/assets/8f7f7e00-f6ce-4825-b32a-411ad56ea7b2)
 
 ## Key Functions
 

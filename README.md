@@ -31,7 +31,6 @@ Low-cost, high-throughput and accurate maize ear phenotyping system
       Place the downloaded model files in the specified directory with the following steps:
 
         ```bash
-        cd GUI/
         unzip Squirrel_Models.zip
         cp Squirrel_Models/* models/
         ```
@@ -49,7 +48,7 @@ Low-cost, high-throughput and accurate maize ear phenotyping system
       After downloading, place the GUI files in the respective ./GUI directory with these steps:
   
         ```
-        mv Squirrel.exe ./GUI/
+        mv Squirrel.exe ./Squirrel
         ```
 
 ## GUI Usage

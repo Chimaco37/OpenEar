@@ -152,7 +152,7 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--video_folder', default='./videos/', type=str, required=False, help='Path to the original video folder')
     parser.add_argument('-p', '--parameter_folder', default='./image_process/', type=str, required=False,
                         help='Path to the image undistortion parameter folder')
-    parser.add_argument('-o', '--output_path',  default='./images/', type=str, required=False, help='Output image path')
+    parser.add_argument('-o', '--output_path',  default='./composition/', type=str, required=False, help='Output image path')
     parser.add_argument('-c', '--cores_number', default=5, type=int, required=False,
                         help='Number of cores used for parallel processing')
 

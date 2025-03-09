@@ -1,5 +1,4 @@
-<img src="https://github.com/user-attachments/assets/18c3a99d-f414-4d89-85e7-2900d2b135ea" alt="ear_logo" height="100px" />
-# Squirrel 
+# Squirrel <img src="https://github.com/user-attachments/assets/18c3a99d-f414-4d89-85e7-2900d2b135ea" alt="ear_logo" height="100px" />
 Low-cost, high-throughput and accurate maize ear phenotyping system
 
 ## Features

@@ -1,6 +1,5 @@
-# Squirrel
+# Squirrel ![ear_logo](https://github.com/user-attachments/assets/18c3a99d-f414-4d89-85e7-2900d2b135ea)
 Low-cost, high-throughput and accurate maize ear phenotyping system
-![logo](https://github.com/user-attachments/assets/1392e8f6-083a-4b8b-8c88-b227d3edfdba)
 
 ## Features
 - **Graphical User Interface (GUI):** User-friendly interface for users without programming expertise.

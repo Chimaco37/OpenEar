@@ -69,14 +69,17 @@ def extract_ear_rotation_marks(image_file):
                 ear_rotation_marks.append(polygon.centroid.x)  # 获取叶节点的高度---这里的坐标原点在左下
 
     # Extract the head and tail elements
+    ear_rotation_marks.sort()
     if len(ear_rotation_marks) >= 7:
         marker_dis = int(ear_rotation_marks[6]) - int(ear_rotation_marks[0])
-        if marker_dis < 350 or marker_dis > 550:
-            return 450
+        print(marker_dis)
+        if marker_dis < 300 or marker_dis > 500:
+            return 420
         else:
             return marker_dis
     else:
-        return 450
+        return 420
+
 
 def process_file(full_run_with_extension, pic_path, model_path, image_undistort_parameters):
     # Remove file extension

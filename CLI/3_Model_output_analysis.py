@@ -72,6 +72,9 @@ def calculate_kernel_row_number(bboxes_data, start_index, end_index):
 
     bboxes_data = bboxes_data[v_start_index:v_end_index]
 
+    if not bboxes_data:
+        return 'NA'
+
     # 因为识别对象不分具体的籽粒种类，因此删除bbox数据中的种类标识
     ymin_values = [bbox[1] for bbox in bboxes_data]
     ymax_values = [bbox[3] for bbox in bboxes_data]
@@ -112,6 +115,9 @@ def calculate_kernel_temp_value(bboxes_data, start_index, end_index):
     v_end_index = int(len(bboxes_data) * 2 / 3)
 
     bboxes_data = bboxes_data[v_start_index:v_end_index]
+
+    if not bboxes_data:
+        return ''
 
     ymin_values = [bbox[1] for bbox in bboxes_data]
     ymax_values = [bbox[3] for bbox in bboxes_data]
@@ -241,7 +247,10 @@ def process_projection_file(file_path, start_index, end_index):
 
     # 粒厚
     kernel_temp_value = calculate_kernel_temp_value(bounding_boxes_data, start_index, end_index)
-    kernel_thickness = kernel_temp_value * kernel_row_number * height_scale_ratio
+    try:
+        kernel_thickness = kernel_temp_value * kernel_row_number * height_scale_ratio
+    except:
+        kernel_thickness = 'NA'
 
     return kernel_number, kernel_row_number, kernel_number_per_row, kernel_thickness
 
@@ -367,8 +376,11 @@ if __name__ == "__main__":
         ear_area = round(np.median(np.array(ear_areas)), 2)
         ear_volume = round(np.median(np.array(ear_volumes)), 2)
 
-        kernel_thickness = round(kernel_thickness, 3)
-
+        try:
+            kernel_thickness = round(kernel_thickness, 3)
+        except:
+            kernel_thickness = 'NA'
+            
         save_results_to_json(label, start_index, end_index, kernel_row_number, visualize_path)
 
         # 添加数据到Excel表格

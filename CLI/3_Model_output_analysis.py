@@ -362,7 +362,7 @@ if __name__ == "__main__":
         kernel_number, kernel_row_number, kernel_number_per_row, kernel_thickness = process_projection_file(projection_label_file, start_index, end_index)
 
         # 获取穗表型数据
-        ear_label_files = glob.glob(os.path.join(args.output_path, 'ear', 'labels', f'{label}_*.txt'))
+        ear_label_files = glob.glob(os.path.join(args.ear_label_folder, f'{label}_*.txt'))
         ear_lengths, ear_widths, ear_widths_test, ear_areas, ear_volumes = [], [], [], [], []
         for ear_label_file in ear_label_files:
             ear_length, ear_width, ear_area, ear_volume = process_ear_file(ear_label_file)

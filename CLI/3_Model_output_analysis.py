@@ -363,13 +363,17 @@ if __name__ == "__main__":
 
         # 获取穗表型数据
         ear_label_files = glob.glob(os.path.join(args.ear_label_folder, f'{label}_*.txt'))
-        ear_lengths, ear_widths, ear_widths_test, ear_areas, ear_volumes = [], [], [], [], []
+        ear_lengths, ear_widths, ear_areas, ear_volumes = [], [], [], []
         for ear_label_file in ear_label_files:
-            ear_length, ear_width, ear_area, ear_volume = process_ear_file(ear_label_file)
-            ear_lengths.append(ear_length)
-            ear_widths.append(ear_width)
-            ear_areas.append(ear_area)
-            ear_volumes.append(ear_volume)
+            try:
+                ear_length, ear_width, ear_area, ear_volume = process_ear_file(ear_label_file)
+                ear_lengths.append(ear_length)
+                ear_widths.append(ear_width)
+                ear_areas.append(ear_area)
+                ear_volumes.append(ear_volume)
+            except Exception as e:
+                print(f"Error on {label}")
+                print(f"Reason: {e}")
 
         ear_length = round(np.median(np.array(ear_lengths)), 2)
         ear_width = round(np.median(np.array(ear_widths)), 2)

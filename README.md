@@ -102,11 +102,11 @@ Low-cost, high-throughput and accurate maize ear phenotyping system
 
 - **Video processing:**
 ```
-python 2_Video_processing.py -v VIDEO_FOLDER -p PARAMETER_FOLDER -o OUTPUT_PATH -c CORES_NUMBER
+python 2_Video_processing.py -v VIDEO_FOLDER -m MODEL_FOLDER -o OUTPUT_PATH -c CORES_NUMBER
 
 optional arguments:
   -v: Path to the original video folder (default is ./videos/)
-  -p: Path to the image undistortion parameter folder (default is ./image_process/)
+  -m: Path to the model folder (default is ./models/)
   -o: Output image folder (default is ./images/)
   -c: Number of cores used for parallel processing (default is 5)
 ```

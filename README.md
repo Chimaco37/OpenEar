@@ -52,7 +52,6 @@ Low-cost, high-throughput and accurate maize ear phenotyping system
         ```
 
 ## GUI Usage
-
 ### 🐿️The 'Squirrel' System
 ![image](https://github.com/user-attachments/assets/cf46c68f-7c0f-4829-a536-57b0f1d30282)
 
@@ -98,8 +97,6 @@ Low-cost, high-throughput and accurate maize ear phenotyping system
 ---
 
 ## CLI Usage
-**Important: Before executing the scripts, please ensure that you have installed ffmpeg (version 7.0.1) and ImageMagick (version 7.1.1), and that both are added to your system’s PATH.**
-
 - **Video processing:**
 ```
 python 2_Video_processing.py -v VIDEO_FOLDER -m MODEL_FOLDER -o OUTPUT_PATH -c CORES_NUMBER

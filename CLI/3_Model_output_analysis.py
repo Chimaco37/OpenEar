@@ -236,8 +236,8 @@ def process_projection_file(file_path, start_index, end_index):
     # 穗粒数
     kernel_number = calculate_kernel_number(bounding_boxes_data, start_index, end_index)
 
-    # 穗行数
-    kernel_row_number = calculate_kernel_row_number(bounding_boxes_data, start_index, end_index)
+    # 穗粒数--这里缩小籽粒选区范围是为了抵消籽粒不整齐带来的误差
+    kernel_row_number = calculate_kernel_row_number(bounding_boxes_data, start_index+0.04, end_index)
 
     # 行粒数
     try:

@@ -111,17 +111,17 @@ optional arguments:
 - **Model training for kernel-related and ear-related traits:**
 
 ```bash
-yolo segment train data=/path/to/your/projection/dataset/data.yaml model=/path/to/your/projection/model.pt epochs=200 batch=4 patience=30 device=0,1,2,3 name=projection_model_training
+yolo segment train data=/path/to/projection/dataset/data.yaml model=/path/to/model.pt epochs=200 batch=4 patience=30 device=0,1,2,3 name=projection_model_training
 
-yolo segment train data=/path/to/your/ear/dataset/data.yaml model=/path/to/your/ear/model.pt epochs=200 batch=32 patience=30 device=0 name=ear_model_training
+yolo segment train data=/path/to/ear/dataset/data.yaml model=/path/to/model.pt epochs=200 batch=32 patience=30 device=0 name=ear_model_training
 ```
 
 - **Model inference for kernel-related and ear-related traits:**
 
 ```
-yolo segment predict model=Projection.pt source=/path/to/projection/image/folder/ device=cpu conf=0.25 iou=0.4 show_labels=False save_txt=True show_conf=False show_boxes=False imgsz=1600 max_det=1000 retina_masks=True  name=projection
+yolo segment predict model=Projection.pt source=/path/to/projection/folder/ device=cpu conf=0.25 iou=0.4 show_labels=False save_txt=True show_conf=False show_boxes=False imgsz=1600 max_det=1000 retina_masks=True  name=projection
 
-yolo segment predict model=Ear.pt source=/path/to/projection/image/folder/ device=0 conf=0.5 imgsz=1440 show_labels=False show_conf=False show_boxes=True max_det=1 save_txt=True retina_masks=True name=ear
+yolo segment predict model=Ear.pt source=/path/to/ear/folder/ device=0 conf=0.5 imgsz=1440 show_labels=False show_conf=False show_boxes=True max_det=1 save_txt=True retina_masks=True name=ear
 ```
 
 - **Model output analysis:**

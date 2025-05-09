@@ -48,8 +48,7 @@ def extract_ear_rotation_marks(image_file):
     ear_rotation_marks = []  # 初始化每个类的多边列表
 
     # 设置色调值
-    # hsv_colors = [np.array([0, 235, 200]), np.array([120, 235, 200])]
-    hsv_colors = [np.array([120, 245, 135])]
+    hsv_colors = [np.array([90, 245, 135])]
 
     for hsv_color in hsv_colors:
         # 定义颜色范围

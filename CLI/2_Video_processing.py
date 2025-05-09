@@ -40,7 +40,7 @@ def polygon_to_bbox(polygon):
 def extract_ear_rotation_marks(image_file):
     # 转换为HSV格式方便色块分割
     image_hsv = cv.imread(image_file)
-    image_hsv = cv.cvtColor(image_hsv[-300:, :, :3], cv.COLOR_BGR2HSV)
+    image_hsv = cv.cvtColor(image_hsv[-800:, :, :3], cv.COLOR_BGR2HSV)
 
     # 最小轮廓面积阈值，用于去除小面积噪音轮廓
     MIN_CONTOUR_AREA = 100  # 根据需要调整该值

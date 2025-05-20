@@ -8,8 +8,6 @@ import glob
 import shutil
 import cv2 as cv
 from shapely.geometry import Polygon
-from PIL import Image
-from pathlib import Path
 
 def run_command(command, timeout=120):
     """运行命令，并在超时时间内完成"""
@@ -72,7 +70,6 @@ def extract_ear_rotation_marks(image_file):
     ear_rotation_marks.sort()
     if len(ear_rotation_marks) >= 7:
         marker_dis = int(ear_rotation_marks[6]) - int(ear_rotation_marks[0])
-        print(marker_dis)
         if marker_dis < 300 or marker_dis > 500:
             return 420
         else:
@@ -80,43 +77,10 @@ def extract_ear_rotation_marks(image_file):
     else:
         return 420
 
-# Crop the frames
-def crop_frames(frame_files, output_pattern):
-    for idx, frame_path in enumerate(frame_files):
-        with Image.open(frame_path) as img:
-            width, height = img.size
-            # 裁剪区域 (left, upper, right, lower)
-            box = (width/2, 0, width/2+1, height)
-            cropped = img.crop(box)
-            cropped.save(output_pattern % idx)
-
-def combine_images_horizontally(file_paths, output_path):
-    """水平拼接匹配到的所有图像"""
-    images = []
-    try:
-        images = [Image.open(fp) for fp in file_paths]
-        # 创建画布
-        combined = Image.new('RGB', (len(file_paths), 1440))
-        # 拼接图像
-        x_offset = 0
-        for img in images:
-            combined.paste(img, (x_offset, 0))
-            x_offset += 1
-        # 保存结果
-        combined.save(output_path, quality=95, optimize=True)
-    finally:
-        # 确保关闭所有图像
-        for img in images:
-            img.close()
-
 def process_file(full_run_with_extension, pic_path, model_path, image_undistort_parameters):
     # Remove file extension
-    full_path = Path(full_run_with_extension)
-    run = full_path.stem
-    full_run = full_path.parent / run
-
-    # 调用工具时，使用这个路径
-    FFMPEG = Path(model_path) / "ffmpeg.exe"
+    run = os.path.basename(full_run_with_extension).split('.')[0]
+    full_run = os.path.normpath(os.path.join(os.path.dirname(full_run_with_extension), run))
 
     ears_dir = os.path.join(pic_path, 'ear')
     projections_dir = os.path.join(pic_path, 'projection')
@@ -124,13 +88,13 @@ def process_file(full_run_with_extension, pic_path, model_path, image_undistort_
     # Import video processing functions
     import sys
     sys.path.append(model_path)
-    from image_process.camera_functions import undistort_and_resize_image
+    from camera_functions import undistort_and_resize_image
 
     mtx, dist = image_undistort_parameters[0], image_undistort_parameters[1]
 
     # Extract frames from video
     run_command(
-        [FFMPEG, '-i', full_run_with_extension, f'{full_run}_frame%03d.png']
+        ["ffmpeg", '-i', full_run_with_extension, f'{full_run}_frame%03d.png']
     )
 
     # Remove image distortion
@@ -141,58 +105,37 @@ def process_file(full_run_with_extension, pic_path, model_path, image_undistort_
 
     delete_file(f"{full_run}_frame*.png")
 
-    # Crop the frame to preset height
-    pattern = f"{run}_undistort*.png"
-    frame_files = sorted(full_path.parent.glob(pattern))
-
-    crop_frames(
-        frame_files=frame_files,
-        output_pattern=f"{full_run}_pixel%03d.png",
+    # Stitch images
+    run_command(
+        ["convert", f"{full_run}_undistort*.png", "-crop", "1x1440+536+0", "+repage", f"{full_run}_pixel%03d.png"]
     )
 
     # Copy specific images to the ears directory
-    for i in [100, 116, 132, 148, 164, 180]:
+    for i in [100, 124, 148, 172, 196, 220]:
         src_file = f"{full_run}_undistort{i}.png"
-        dest_file = os.path.join(ears_dir, f"{run}_{(i // 16) - 5}.png")
+        dest_file = os.path.join(ears_dir, f"{run}_{(i // 24) - 3}.png")
         shutil.move(src_file, dest_file)
     delete_file(f"{full_run}_undistort*.png")
 
     # Combine pixel images horizontally
-    pattern = f"{run}_pixel*.png"
-    file_paths = sorted(full_path.parent.glob(pattern))
-
-    # 使用示例
-    combine_images_horizontally(
-        file_paths=file_paths,
-        output_path=f"{full_run}_raw.png"
-    )
+    run_command([
+        "convert", f"{full_run}_pixel*.png", "+append", "+repage", f"{full_run}_raw.png"
+    ])
     delete_file(f"{full_run}_pixel*.png")
 
     marker_dis = extract_ear_rotation_marks(f"{full_run}_raw.png")
     resize_length = int(marker_dis * 1.1)
 
     # Crop raw image
-    with Image.open(f"{full_run}_raw.png") as img:
-        width, height = img.size
-        # 执行裁剪 (left, upper, right, lower)
-        box = (40, 0, 40+resize_length, height)
-        cropped = img.crop(box)
-
-        # 直接保存最终 raw 文件（跳过临时文件）
-        cropped.save(f"{full_run}_cropped.png", "PNG")
+    run_command([
+        "convert", f"{full_run}_raw.png", "-crop", f"{resize_length}x1440+40+0", "+repage", f"{full_run}_cropped.png"
+    ])
     delete_file(f"{full_run}_raw.png")
 
     # Final resize operation
-    target_size = (1920, 1440)
-    with Image.open(f"{full_run}_cropped.png") as img:
-        # 移除 Alpha 通道（转换为 RGB）
-        rgb_img = img.convert("RGB")
-
-        # 强制拉伸到目标尺寸（LANCZOS 重采样保持质量）
-        resized = rgb_img.resize(target_size, Image.Resampling.LANCZOS)
-
-        # 保存最终结果
-        resized.save(f"{full_run}.png", "PNG", optimize=True, quality=95)
+    run_command([
+        "convert", f"{full_run}_cropped.png", "-resize", "1920x1440!", f"{full_run}.png"
+    ])
     delete_file(f"{full_run}_cropped.png")
 
     # Move the generated image
@@ -206,8 +149,8 @@ if __name__ == '__main__':
 
     # Add arguments
     parser.add_argument('-v', '--video_folder', default='./videos/', type=str, required=False, help='Path to the original video folder')
-    parser.add_argument('-m', '--model_folder', default='./models/', type=str, required=False,
-                        help='Path to the model folder')
+    parser.add_argument('-p', '--parameter_folder', default='./image_process/', type=str, required=False,
+                        help='Path to the image undistortion parameter folder')
     parser.add_argument('-o', '--output_path',  default='./composition/', type=str, required=False, help='Output image path')
     parser.add_argument('-c', '--cores_number', default=5, type=int, required=False,
                         help='Number of cores used for parallel processing')
@@ -224,13 +167,13 @@ if __name__ == '__main__':
     os.makedirs(projection_dir, exist_ok=True)
 
     # 导入视频处理参数
-    mtx = np.load(os.path.join(args.model_folder, "image_process", "HQ_camera_1072_1440_mtx_dist.npz"))["x"]
-    dist = np.load(os.path.join(args.model_folder, "image_process", "HQ_camera_1072_1440_mtx_dist.npz"))["y"]
+    mtx = np.load(os.path.join(args.parameter_folder, "HQ_camera_1072_1440_mtx_dist.npz"))["x"]
+    dist = np.load(os.path.join(args.parameter_folder, "HQ_camera_1072_1440_mtx_dist.npz"))["y"]
     image_undistort_parameters = [mtx, dist]
 
     vid_path = os.path.abspath(args.video_folder)
     all_files = [os.path.join(vid_path, f) for f in os.listdir(vid_path) if f.endswith(('.mp4', '.avi'))]
-    tasks = [(file, args.output_path, args.model_folder, image_undistort_parameters) for file in all_files]
+    tasks = [(file, args.output_path, args.parameter_folder, image_undistort_parameters) for file in all_files]
 
     with ThreadPoolExecutor(max_workers=args.cores_number) as executor:
         executor.map(lambda p: process_file(*p), tasks)

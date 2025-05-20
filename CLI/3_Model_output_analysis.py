@@ -39,8 +39,8 @@ def pre_process_ear_label_file(ear_file_path):
         data = file.readline().split()
         category = data[0]
         for i in range(1, len(data), 2):
-            x = float(data[i])
-            y = float(data[i + 1])
+            x = float(data[i]) * image_width # 图像宽1072
+            y = float(data[i + 1]) * image_height # 图像高1440 
             polygon.append((x, y))
 
     polygon = np.array(polygon, dtype=np.float32)
@@ -141,30 +141,25 @@ def calculate_ear_length_width_area(polygon):
     polygon = Polygon(polygon)  # 转换为多边形类型
 
     # 计算多边形面积并转换为cm²
-    pixel_area = polygon.area  # 多边形面积 (像素单位)
-    ear_area = pixel_area * height_scale_ratio * width_scale_ratio
-    # 穗长为外接矩形的长边
-    ear_length = max(l, w) * height_scale_ratio
+    ear_area = polygon.area * scale_ratio ** 2 # 多边形面积 (像素单位)
 
     cutting_line = create_cutting_line(cx, cy, theta, l, w)
 
     # 获取线段与多边形边界的交点
     intersection_line = cutting_line.intersection(polygon)
 
-    # ear_length = 0.2585716 + 0.01987238 * 1440 * max(l, w)  # 穗长的拟合曲线
-
-    ear_length = max(l,w) * height_scale_ratio
-    ear_width = intersection_line.length * width_scale_ratio
+    # 穗长为外接矩形的长边
+    ear_length = max(l,w) * scale_ratio
+    ear_width = intersection_line.length * scale_ratio
 
     return ear_length, ear_width, ear_area
 
-
 def calculate_ear_volume(polygon):
     distances, interval_h = find_intersection_distances(polygon)
+    h = interval_h * scale_ratio
     ear_volume = 0
     for distance in distances:
-        radius = distance / 2 * width_scale_ratio
-        h = interval_h * height_scale_ratio
+        radius = distance / 2 * scale_ratio
         ear_volume += math.pi * radius ** 2 * h
 
     return ear_volume
@@ -177,13 +172,13 @@ def create_cutting_line(cx, cy, theta, l, w):
     if l >= w:
         # 如果长边是l，计算垂直于长边的线段
         rad = np.deg2rad(-theta)
-        dx = np.sin(rad) * 1000  # 1000是线段长度的一半，可以根据需要调整
-        dy = np.cos(rad) * 1000
+        dx = np.sin(rad) * MAX_LEN  # 1000是线段长度的一半，可以根据需要调整
+        dy = np.cos(rad) * MAX_LEN
     else:
         #     如果长边是w，计算垂直于短边（也就是长边）的线段
         rad = np.deg2rad(theta)  # 加90度使线段垂直于长边
-        dx = np.cos(rad) * 1000
-        dy = np.sin(rad) * 1000
+        dx = np.cos(rad) * MAX_LEN
+        dy = np.sin(rad) * MAX_LEN
 
     line = LineString([(cx - dx, cy - dy), (cx + dx, cy + dy)])
     return line
@@ -199,7 +194,7 @@ def find_intersection_distances(polygon):
 
     for i in range(0, num_lines):
         y = i * interval_h + min_y
-        line = LineString([(0, y), (1, y)])
+        line = LineString([(0, y), (image_width, y)])
 
         # 获取线段与多边形边界的交点
         intersection_line = line.intersection(polygon)
@@ -218,25 +213,19 @@ def find_intersection_distances(polygon):
 
     return intersection_distances, interval_h
 
-
 def average(data_list):
     if len(data_list) == 0:
         return None
     return sum(data_list) / len(data_list)
 
-
-# scale_ratio为转换系数，最终计算单位为cm(2cm-100pixels, image_height=1440, image_width=1072)
-height_scale_ratio = 2/100*1440
-width_scale_ratio = 2/100*1072
-
 def process_projection_file(file_path, start_index, end_index):
     # 预处理投影预测文件获取bboxes数据
     bounding_boxes_data = pre_process_projection_label_file(file_path)
 
-    # 穗粒数
+    # 穗粒数--这里缩小籽粒选区范围是为了抵消籽粒不整齐带来的误差
     kernel_number = calculate_kernel_number(bounding_boxes_data, start_index, end_index)
 
-    # 穗粒数--这里缩小籽粒选区范围是为了抵消籽粒不整齐带来的误差
+    # 穗行数
     kernel_row_number = calculate_kernel_row_number(bounding_boxes_data, start_index+0.04, end_index)
 
     # 行粒数
@@ -248,7 +237,7 @@ def process_projection_file(file_path, start_index, end_index):
     # 粒厚
     kernel_temp_value = calculate_kernel_temp_value(bounding_boxes_data, start_index, end_index)
     try:
-        kernel_thickness = kernel_temp_value * kernel_row_number * height_scale_ratio
+        kernel_thickness = kernel_temp_value * kernel_row_number * scale_ratio * image_height
     except:
         kernel_thickness = 'NA'
 
@@ -320,9 +309,10 @@ import argparse
 import shutil
 
 # scale_ratio为转换系数，最终计算单位为cm(2cm-100pixels, image_height=1440, image_width=1072)
-height_scale_ratio = 2 / 100 * 1440
-width_scale_ratio = 2 / 100 * 1072
-
+scale_ratio = 2 / 100
+image_height=1440
+image_width=1072
+MAX_LEN = math.hypot(image_width, image_height)
 
 if __name__ == "__main__":
     # Create the parser
@@ -352,7 +342,7 @@ if __name__ == "__main__":
     ws.append(
         ["Labels", "Ear_Length", "Ear_Width", "Ear_Area",
          "Ear_Volume", "Kernel_Number", "Kernel_Row_Number",
-         "Kernel_Number_per_Row", "Kernel_Thickness"])
+         "Kernel_Number_per_Row", "Kernel_Thickness", "Kernel_Width"])
     # 设定一圈的起始点
     start_index, end_index = 0.04, 0.95
 
@@ -381,6 +371,11 @@ if __name__ == "__main__":
         ear_volume = round(np.median(np.array(ear_volumes)), 2)
 
         try:
+            kernel_width = round(ear_width * math.pi / kernel_row_number, 3)
+        except:
+            kernel_width = 'NA'
+
+        try:
             kernel_thickness = round(kernel_thickness, 3)
         except:
             kernel_thickness = 'NA'
@@ -389,7 +384,7 @@ if __name__ == "__main__":
 
         # 添加数据到Excel表格
         ws.append([label, ear_length, ear_width, ear_area, ear_volume, kernel_number, kernel_row_number,
-                   kernel_number_per_row, kernel_thickness])
+                   kernel_number_per_row, kernel_thickness, kernel_width])
 
     wb.save(output_file)
 
@@ -417,6 +412,7 @@ if __name__ == "__main__":
         else:
             # 根据model2的预测结果决定是否只在第六列标记为NA
             if kernel_row_number_prediction == 0:
-                ws.cell(row=row[0].row, column=7, value='NA')  # 假设kernel_row_number在第六列
+                for col in range(7, 11):  # 设置第 7 到 10 列为 NA
+                    ws.cell(row=row[0].row, column=col, value='NA') # 假设kernel_row_number在第六列
 
     wb.save(output_file)

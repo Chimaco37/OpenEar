@@ -121,7 +121,7 @@ yolo segment train data=/path/to/ear/dataset/data.yaml model=/path/to/model.pt e
 ```
 yolo segment predict model=Projection.pt source=/path/to/projection/folder/ device=cpu conf=0.25 iou=0.4 show_labels=False save_txt=True show_conf=False show_boxes=False imgsz=1600 max_det=1000 retina_masks=True  name=projection
 
-yolo segment predict model=Ear.pt source=/path/to/ear/folder/ device=0 conf=0.5 imgsz=1440 show_labels=False show_conf=False show_boxes=True max_det=1 save_txt=True retina_masks=True name=ear
+yolo segment predict model=Ear.pt source=/path/to/ear/folder/ device=0 conf=0.5 imgsz=640 show_labels=False show_conf=False show_boxes=True max_det=1 save_txt=True retina_masks=True name=ear
 ```
 
 - **Model output analysis:**

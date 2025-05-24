@@ -106,6 +106,7 @@ optional arguments:
   -m: Path to the model folder (default is ./models/)
   -o: Output image folder (default is ./images/)
   -c: Number of cores used for parallel processing (default is 5)
+  -e: Ear center in the image used for video processing (default is 0.5)
 ```
                         
 - **Model training for kernel-related and ear-related traits:**

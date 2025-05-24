@@ -77,7 +77,7 @@ def extract_ear_rotation_marks(image_file):
     else:
         return 420
 
-def process_file(full_run_with_extension, pic_path, model_path, image_undistort_parameters):
+def process_file(full_run_with_extension, pic_path, model_path, image_undistort_parameters, ear_center):
     # Remove file extension
     run = os.path.basename(full_run_with_extension).split('.')[0]
     full_run = os.path.normpath(os.path.join(os.path.dirname(full_run_with_extension), run))
@@ -105,9 +105,11 @@ def process_file(full_run_with_extension, pic_path, model_path, image_undistort_
 
     delete_file(f"{full_run}_frame*.png")
 
+    ear_center = int(ear_center * 1072)
+
     # Stitch images
     run_command(
-        ["convert", f"{full_run}_undistort*.png", "-crop", "1x1440+536+0", "+repage", f"{full_run}_pixel%03d.png"]
+        ["convert", f"{full_run}_undistort*.png", "-crop", f"1x1440+{ear_center}+0", "+repage", f"{full_run}_pixel%03d.png"]
     )
 
     # Copy specific images to the ears directory
@@ -154,6 +156,8 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output_path',  default='./composition/', type=str, required=False, help='Output image path')
     parser.add_argument('-c', '--cores_number', default=5, type=int, required=False,
                         help='Number of cores used for parallel processing')
+    parser.add_argument('-e', '--ear_center', default=0.5, type=float, required=False,
+                        help='Ear center in the image used for video processing')
 
 
     # Parse the arguments
@@ -173,7 +177,7 @@ if __name__ == '__main__':
 
     vid_path = os.path.abspath(args.video_folder)
     all_files = [os.path.join(vid_path, f) for f in os.listdir(vid_path) if f.endswith(('.mp4', '.avi'))]
-    tasks = [(file, args.output_path, args.parameter_folder, image_undistort_parameters) for file in all_files]
+    tasks = [(file, args.output_path, args.parameter_folder, image_undistort_parameters, args.ear_center) for file in all_files]
 
     with ThreadPoolExecutor(max_workers=args.cores_number) as executor:
         executor.map(lambda p: process_file(*p), tasks)

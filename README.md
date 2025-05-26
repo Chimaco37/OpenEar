@@ -22,7 +22,7 @@ Low-cost, high-throughput and accurate maize ear phenotyping system
 
 3. **Download necessary models:**  
 
-    First, download the required model files from the [Models Figshare Repository](https://doi.org/10.6084/m9.figshare.26282731).
+    First, download the required model files from the [Models Figshare Repository](https://doi.org/10.6084/m9.figshare.29115983).
     
     **Placement of model files:**
     

@@ -1,7 +1,7 @@
 <img src="https://github.com/user-attachments/assets/18c3a99d-f414-4d89-85e7-2900d2b135ea" alt="ear_logo" height="120px" />
 
-# Squirrel
-Low-cost, high-throughput and accurate maize ear phenotyping system
+# OpenEar
+Open-source, low-cost, high-throughput and accurate maize ear phenotyping system
 
 ## Features
 - **Graphical User Interface (GUI):** User-friendly interface for users without programming expertise.
@@ -11,12 +11,12 @@ Low-cost, high-throughput and accurate maize ear phenotyping system
 
 1. **Clone the repository:**
     ```bash
-    git clone https://github.com/Chimaco37/Squirrel.git
+    git clone https://github.com/Chimaco37/OpenEar.git
     ```
 2. **Install dependencies (Only when you need to use CLI):**
 
     ```bash
-    cd Squirrel/
+    cd OpenEar/
     pip install -r requirements.txt
     ```
 
@@ -52,7 +52,7 @@ Low-cost, high-throughput and accurate maize ear phenotyping system
         ```
 
 ## GUI Usage
-### 🐿️The 'Squirrel' System
+### 🐿️ OpenEar
 ![Squirrel](https://github.com/user-attachments/assets/a23fc0f7-b28a-4154-84b8-7a2faa5af0db)
 
 ## Key Functions

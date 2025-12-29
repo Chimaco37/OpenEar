@@ -48,12 +48,12 @@ Open-source, low-cost, high-throughput and accurate maize ear phenotyping system
       After downloading, place the GUI files in the respective ./GUI directory with these steps:
   
         ```
-        mv Squirrel.exe ./Squirrel
+        mv Squirrel.exe ./OpenEar
         ```
 
 ## GUI Usage
 ### 🐿️ OpenEar
-![Squirrel](https://github.com/user-attachments/assets/a23fc0f7-b28a-4154-84b8-7a2faa5af0db)
+![OpenEar](https://github.com/user-attachments/assets/a23fc0f7-b28a-4154-84b8-7a2faa5af0db)
 
 ## Key Functions
 

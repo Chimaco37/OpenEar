@@ -5,7 +5,12 @@ def polygon_to_bbox(polygon):
     min_y, max_y = min(y_coords), max(y_coords)
     w = round(max_x - min_x, 7)
     h = round(max_y - min_y, 7)
-    return min_x, min_y, max_x, max_y, w, h
+
+    polygon = np.array(polygon, dtype=np.float32)
+
+    area = Polygon(polygon).area  # 转换为多边形类型求面积
+
+    return min_x, min_y, max_x, max_y, w, h, area
 
 def pre_process_projection_label_file(projection_label_file_path):
     with open(projection_label_file_path, 'r') as infile:
@@ -60,17 +65,11 @@ def calculate_kernel_number(bboxes_data, start_index, end_index):
     return kernel_number
 
 def calculate_kernel_row_number(bboxes_data, start_index, end_index):
-    # 筛选出处于横向边界内的多边形
-    bboxes_data = [bbox for bbox in bboxes_data if
-                   start_index < (bbox[0] + bbox[2]) / 2 < end_index]
+    # 防止在人工筛查数据时，穗行数区间计算出现问题
+    if start_index >= end_index:
+        start_index, end_index = 0.5, 0.5
 
-    # 排序后取中间1/3的bbox进行操作
-    bboxes_data.sort(key=lambda x: x[3])  # 按 y_max 进行排序
-
-    v_start_index = int(len(bboxes_data) / 3)
-    v_end_index = int(len(bboxes_data) * 2 / 3)
-
-    bboxes_data = bboxes_data[v_start_index:v_end_index]
+    bboxes_data = filter_regular_kernels(bboxes_data, start_index, end_index)
 
     if not bboxes_data:
         return 'NA'
@@ -82,7 +81,8 @@ def calculate_kernel_row_number(bboxes_data, start_index, end_index):
     LOW = min(ymin_values)
     HIGH = max(ymax_values)
 
-    num_intervals = 1000
+    # 生成200条线段去估算穗行数
+    num_intervals = 200
     step_size = (HIGH - LOW) / num_intervals
 
     # 将籽粒所在区间纵向等分，计算边界线穿过的bbox数量
@@ -104,17 +104,8 @@ def calculate_kernel_row_number(bboxes_data, start_index, end_index):
 
 # 自定义粒厚计算公式
 def calculate_kernel_temp_value(bboxes_data, start_index, end_index):
-    # 筛选出处于横向边界内的多边形
-    bboxes_data = [bbox for bbox in bboxes_data if
-                   start_index < (bbox[0] + bbox[2]) / 2 < end_index]
 
-    # 排序后取中间1/3的bbox进行操作
-    bboxes_data.sort(key=lambda x: x[3])  # 按 y_max 进行排序
-
-    v_start_index = int(len(bboxes_data) / 3)
-    v_end_index = int(len(bboxes_data) * 2 / 3)
-
-    bboxes_data = bboxes_data[v_start_index:v_end_index]
+    bboxes_data = filter_regular_kernels(bboxes_data, start_index, end_index)
 
     if not bboxes_data:
         return ''
@@ -132,16 +123,48 @@ def calculate_kernel_temp_value(bboxes_data, start_index, end_index):
 
     return kernel_temp_value
 
+# 自定义粒面积计算公式
+def calculate_thousand_kernel_area_temp_value(bboxes_data, start_index, end_index):
+
+    filtered_bboxes_data = filter_regular_kernels(bboxes_data, start_index, end_index)
+
+    if not bboxes_data:
+        return ''
+
+    area_sum = 0
+
+    for bbox in filtered_bboxes_data:
+        area_sum += bbox[6]
+
+    filtered_kernel_number = len(bboxes_data)
+
+    thousand_kernel_area_temp_value = area_sum / filtered_kernel_number * 1000
+
+    return thousand_kernel_area_temp_value
+
+def filter_regular_kernels(bboxes_data, start_index, end_index):
+    # 横向中心筛选
+    bboxes_data = [
+        bbox for bbox in bboxes_data
+        if start_index < (bbox[0] + bbox[2]) / 2 < end_index
+    ]
+
+    # 按 y_max 排序
+    bboxes_data.sort(key=lambda x: x[3])
+
+    v_start_index = int(len(bboxes_data) / 16)
+    v_end_index = int(len(bboxes_data) * 15 / 16)
+
+    filtered_bboxes = bboxes_data[v_start_index:v_end_index]
+
+    return filtered_bboxes
 
 #################################################### Ear traits ########################################################
-def calculate_ear_length_width_area(polygon):
+def calculate_ear_length_diameter(polygon):
     # 直接引用计算
     (cx, cy), (l, w), theta = cv2.minAreaRect(polygon)  # 求出最小外接矩形，更严谨，避免了棒子歪斜带来的误差
 
     polygon = Polygon(polygon)  # 转换为多边形类型
-
-    # 计算多边形面积并转换为cm²
-    ear_area = polygon.area * scale_ratio ** 2 # 多边形面积 (像素单位)
 
     cutting_line = create_cutting_line(cx, cy, theta, l, w)
 
@@ -150,9 +173,9 @@ def calculate_ear_length_width_area(polygon):
 
     # 穗长为外接矩形的长边
     ear_length = max(l,w) * scale_ratio
-    ear_width = intersection_line.length * scale_ratio
+    ear_diameter = intersection_line.length * scale_ratio
 
-    return ear_length, ear_width, ear_area
+    return ear_length, ear_diameter
 
 def calculate_ear_volume(polygon):
     distances, interval_h = find_intersection_distances(polygon)
@@ -186,9 +209,10 @@ def create_cutting_line(cx, cy, theta, l, w):
 
 def find_intersection_distances(polygon):
     # 获取线段与多边形相交部分的长度列表
-    num_lines = 100
+    # 将Ear polygon分为20段来计算Ear volume
+    num_lines = 20
     intersection_distances = []
-    _, min_y, _, max_y, _, h = polygon_to_bbox(polygon)
+    _, min_y, _, max_y, _, h, _ = polygon_to_bbox(polygon)
     interval_h = h / num_lines
     polygon = Polygon(polygon)  # 将array转化为geometry形式才能操作
 
@@ -226,7 +250,7 @@ def process_projection_file(file_path, start_index, end_index):
     kernel_number = calculate_kernel_number(bounding_boxes_data, start_index, end_index)
 
     # 穗行数
-    kernel_row_number = calculate_kernel_row_number(bounding_boxes_data, start_index+0.04, end_index)
+    kernel_row_number = calculate_kernel_row_number(bounding_boxes_data, start_index + 0.035, end_index - 0.035)
 
     # 行粒数
     try:
@@ -241,7 +265,10 @@ def process_projection_file(file_path, start_index, end_index):
     except:
         kernel_thickness = 'NA'
 
-    return kernel_number, kernel_row_number, kernel_number_per_row, kernel_thickness
+    # 千粒面积(未转换)--用以估算千粒重
+    thousand_kernel_area_temp_value = calculate_thousand_kernel_area_temp_value(bounding_boxes_data, start_index, end_index)
+
+    return kernel_number, kernel_row_number, kernel_number_per_row, kernel_thickness, thousand_kernel_area_temp_value
 
 
 def process_ear_file(file_path):
@@ -249,14 +276,14 @@ def process_ear_file(file_path):
     polygon = pre_process_ear_label_file(file_path)
 
     # 穗长穗宽
-    ear_length, ear_width, ear_area = calculate_ear_length_width_area(polygon)
+    ear_length, ear_diameter = calculate_ear_length_diameter(polygon)
 
     # 穗体积估算
     ear_volume = calculate_ear_volume(polygon)
 
-    return ear_length, ear_width, ear_area, ear_volume
+    return ear_length, ear_diameter, ear_volume
 
-from tensorflow.keras.models import load_model
+# from tensorflow.keras.models import load_model
 
 # 定义穗行分类图像处理函数
 def preprocess_image(image_path, target_size):
@@ -294,7 +321,6 @@ def save_results_to_json(label, start_horizontal_index, end_horizontal_index, ke
     except:
         return None
 
-
 import os
 import cv2
 from openpyxl import Workbook, load_workbook
@@ -312,6 +338,9 @@ import shutil
 scale_ratio = 2 / 100
 image_height=1440
 image_width=1072
+projection_image_width = 1920
+KN_range = 0.91
+# KRN_range = 0.84
 MAX_LEN = math.hypot(image_width, image_height)
 
 if __name__ == "__main__":
@@ -340,38 +369,54 @@ if __name__ == "__main__":
     wb = Workbook()
     ws = wb.active
     ws.append(
-        ["Labels", "Ear_Length", "Ear_Width", "Ear_Area",
-         "Ear_Volume", "Kernel_Number", "Kernel_Row_Number",
-         "Kernel_Number_per_Row", "Kernel_Thickness", "Kernel_Width"])
+        ["Labels", "Ear_Length", "Ear_Diameter", "Ear_Volume", "Ear_Weight",
+         "Kernel_Number", "Kernel_Row_Number", "Kernel_Number_per_Row", 
+         "Kernel_Thickness", "Kernel_Width", "Thousand_Kernel_Weight"])
     # 设定一圈的起始点
-    start_index, end_index = 0.04, 0.95
+    start_index = (1 - KN_range) / 2
+    end_index = (1 + KN_range) / 2
 
     for projection_label_file in projection_label_files:
         label = os.path.basename(projection_label_file).split(".")[0]  # 提取标签名
         # 获取籽粒表型数据
-        kernel_number, kernel_row_number, kernel_number_per_row, kernel_thickness = process_projection_file(projection_label_file, start_index, end_index)
+        kernel_number, kernel_row_number, kernel_number_per_row, kernel_thickness, thousand_kernel_area_temp_value = process_projection_file(projection_label_file, start_index, end_index)
 
         # 获取穗表型数据
         ear_label_files = glob.glob(os.path.join(args.ear_label_folder, f'{label}_*.txt'))
-        ear_lengths, ear_widths, ear_areas, ear_volumes = [], [], [], []
+        ear_lengths, ear_diameters, ear_volumes = [], [], []
         for ear_label_file in ear_label_files:
             try:
-                ear_length, ear_width, ear_area, ear_volume = process_ear_file(ear_label_file)
+                ear_length, ear_diameter, ear_volume = process_ear_file(ear_label_file)
                 ear_lengths.append(ear_length)
-                ear_widths.append(ear_width)
-                ear_areas.append(ear_area)
+                ear_diameters.append(ear_diameter)
                 ear_volumes.append(ear_volume)
             except Exception as e:
                 print(f"Error on {label}")
                 print(f"Reason: {e}")
 
         ear_length = round(np.median(np.array(ear_lengths)), 2)
-        ear_width = round(np.median(np.array(ear_widths)), 2)
-        ear_area = round(np.median(np.array(ear_areas)), 2)
+        ear_diameter = round(np.median(np.array(ear_diameters)), 2)
         ear_volume = round(np.median(np.array(ear_volumes)), 2)
 
+        # 计算实际的千粒面积
         try:
-            kernel_width = round(ear_width * math.pi / kernel_row_number, 3)
+            # 换算横轴实际的scale，根据穗周长及start_index&end_index
+            x_scale_ratio = ear_diameter * math.pi / (end_index - start_index) * projection_image_width
+            thousand_kernel_area = thousand_kernel_area_temp_value * x_scale_ratio * scale_ratio
+            # 粒面积换算千粒重的公式为y=0.58x+66.84
+            thousand_kernel_weight = round((thousand_kernel_area * 0.58 + 66.84), 2)
+        except:
+            thousand_kernel_weight = 'NA'
+
+        # 通过穗体积来估算穗重
+        try:
+            # 穗体积换算穗重的公式为y=0.65x+35.86
+            ear_weight = round((ear_volume * 0.65 + 35.86), 2)
+        except:
+            ear_weight = "NA"
+
+        try:
+            kernel_width = round(ear_diameter * math.pi / kernel_row_number, 3)
         except:
             kernel_width = 'NA'
 
@@ -383,36 +428,36 @@ if __name__ == "__main__":
         save_results_to_json(label, start_index, end_index, kernel_row_number, visualize_path)
 
         # 添加数据到Excel表格
-        ws.append([label, ear_length, ear_width, ear_area, ear_volume, kernel_number, kernel_row_number,
-                   kernel_number_per_row, kernel_thickness, kernel_width])
+        ws.append([label, ear_length, ear_diameter, ear_volume, ear_weight, kernel_number, kernel_row_number,
+                   kernel_number_per_row, kernel_thickness, kernel_width, thousand_kernel_weight])
 
     wb.save(output_file)
 
-    # 加载模型
-    try:
-        model1 = load_model(os.path.join(args.model_path, "1_Developmental_Status_Assesment.h5"))
-        model2 = load_model(os.path.join(args.model_path, "2_Kernel_Row_Visibility_Assesment.h5"))
-    except Exception as e:
-        print(e)
+    # # 加载模型
+    # try:
+    #     model1 = load_model(os.path.join(args.model_path, "1_Developmental_Status_Assesment.h5"))
+    #     model2 = load_model(os.path.join(args.model_path, "2_Kernel_Row_Visibility_Assesment.h5"))
+    # except Exception as e:
+    #     print(e)
 
-    output_file = os.path.join(args.output_path, "ear_phenotyping.xlsx")
-    wb = load_workbook(output_file)
-    ws = wb.active
+    # output_file = os.path.join(args.output_path, "ear_phenotyping.xlsx")
+    # wb = load_workbook(output_file)
+    # ws = wb.active
 
-    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=1):  # 假设标签在第一列
-        label = row[0].value
-        projection_pic_path = os.path.join(args.projection_image_folder, f'{label}.png')
-        phenotype_prediction = phenotype_classification(projection_pic_path, model1)
-        kernel_row_number_prediction = kernel_row_number_classification(projection_pic_path, model2)
+    # for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=1):  # 假设标签在第一列
+    #     label = row[0].value
+    #     projection_pic_path = os.path.join(args.projection_image_folder, f'{label}.png')
+    #     phenotype_prediction = phenotype_classification(projection_pic_path, model1)
+    #     kernel_row_number_prediction = kernel_row_number_classification(projection_pic_path, model2)
 
-        # 根据model1的预测结果决定是否标记整行为NA
-        if phenotype_prediction == 0:
-            for col in range(2, ws.max_column + 1):  # 假设要标记整行
-                ws.cell(row=row[0].row, column=col, value='NA')
-        else:
-            # 根据model2的预测结果决定是否只在第六列标记为NA
-            if kernel_row_number_prediction == 0:
-                for col in range(7, 11):  # 设置第 7 到 10 列为 NA
-                    ws.cell(row=row[0].row, column=col, value='NA') # 假设kernel_row_number在第六列
+    #     # 根据model1的预测结果决定是否标记整行为NA
+    #     if phenotype_prediction == 0:
+    #         for col in range(2, ws.max_column + 1):  # 假设要标记整行
+    #             ws.cell(row=row[0].row, column=col, value='NA')
+    #     else:
+    #         # 根据model2的预测结果决定是否标记第七列之后为NA
+    #         if kernel_row_number_prediction == 0:
+    #             for col in range(7, 12):  # 设置第 7 到 11 列为 NA
+    #                 ws.cell(row=row[0].row, column=col, value='NA') # 假设kernel_row_number在第七列
 
-    wb.save(output_file)
+    # wb.save(output_file)

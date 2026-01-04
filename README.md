@@ -53,7 +53,7 @@ Open-source, low-cost, high-throughput and accurate maize ear phenotyping system
 
 ## GUI Usage
 ### 🐿️ OpenEar
-![OpenEar](https://github.com/user-attachments/assets/a23fc0f7-b28a-4154-84b8-7a2faa5af0db)
+<img width="1816" height="1021" alt="image" src="https://github.com/user-attachments/assets/cadf4d19-acc9-4597-a5b9-617109bba629" />
 
 ## Key Functions
 

@@ -7,13 +7,11 @@ import json
 
 def undistort_images(originalimg, labelpaths, transformedpath):
     for labelpath in labelpaths:
-        # 读取 JSON 文件
         with open(labelpath, 'r') as file:
             data = json.load(file)
 
         label = labelpath.split("\\")[-1].split(".json")[0]
         img = cv2.imread(os.path.join(originalimg, label + '.png'))
-        # 指定图像尺寸，方便将小数左边转换为整数
         IMGWIDTH = img.shape[1]
         IMGHEIGHT = img.shape[0]
 
@@ -24,7 +22,6 @@ def undistort_images(originalimg, labelpaths, transformedpath):
             [200, 700]
         ], dtype="float32")
 
-        # 提取点坐标
         all_coordinates = []
         for shape in data.get('shapes', []):
             if shape.get('shape_type') == 'point':
@@ -35,7 +32,6 @@ def undistort_images(originalimg, labelpaths, transformedpath):
         all_coordinates = np.array(all_coordinates)
 
         # Find the four corner points
-        # 假设 all_coordinates 是 (N,2) 的 ndarray，顺序是任意的 (x,y)
         s = all_coordinates.sum(axis=1)          # x + y
         d = all_coordinates[:, 0] - all_coordinates[:, 1]  # x - y
 
@@ -44,12 +40,11 @@ def undistort_images(originalimg, labelpaths, transformedpath):
         left_bottom  = all_coordinates[np.argmin(d)]
         right_top    = all_coordinates[np.argmax(d)]
 
-        side1 = np.linalg.norm(left_top - right_top)      #获取长短边
+        side1 = np.linalg.norm(left_top - right_top)      
         side2 = np.linalg.norm(left_top - left_bottom)
 
         corner_points = np.array([left_top, right_top, right_bottom, left_bottom], dtype=np.float32)
         
-        # 计算透射变换矩阵
         M = cv2.getPerspectiveTransform(corner_points, dst_pts)
 
         transformed = cv2.warpPerspective(img, M, (IMGWIDTH, IMGHEIGHT))
@@ -73,5 +68,6 @@ if __name__ == "__main__":
     original_image_folder = args.image_folder
     label_folder = glob.glob(os.path.join(args.label_folder, '*.json'))
     output_path = args.output_undistorted_image_path
+
 
     undistort_images(original_image_folder, label_folder, output_path)

@@ -9,7 +9,7 @@ from tkinter import messagebox
 root = Tk()
 root.title('Get Phenotype')
 #root.iconbitmap('icon_images/Corn.ico')
-root.geometry('620x220')  # 设置窗口大小
+root.geometry('620x220') 
 
 label_input = Entry(root,borderwidth=5, font=("Helvetica", 40))
 label_input.grid(row=0, column=0)

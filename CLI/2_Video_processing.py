@@ -10,7 +10,6 @@ import cv2 as cv
 from shapely.geometry import Polygon
 
 def run_command(command, timeout=120):
-    """运行命令，并在超时时间内完成"""
     try:
         subprocess.run(command, check=True, timeout=timeout)
     except subprocess.TimeoutExpired:
@@ -20,13 +19,10 @@ def run_command(command, timeout=120):
 
 def delete_file(files):
     files_to_delete = glob.glob(files)
-    # 删除匹配的文件
     for file in files_to_delete:
         os.remove(file)
 
-# 定义函数
 def polygon_to_bbox(polygon):
-    # Convert polygon to bounding box
     x_coords, y_coords = zip(*polygon)
     min_x, max_x = min(x_coords), max(x_coords)
     min_y, max_y = min(y_coords), max(y_coords)
@@ -36,37 +32,29 @@ def polygon_to_bbox(polygon):
     return min_y, max_y, h, min_x, max_x, w
 
 def extract_ear_rotation_marks(image_file):
-    # 转换为HSV格式方便色块分割
     image_hsv = cv.imread(image_file)
     image_hsv = cv.cvtColor(image_hsv[-800:, :, :3], cv.COLOR_BGR2HSV)
 
-    # 最小轮廓面积阈值，用于去除小面积噪音轮廓
-    MIN_CONTOUR_AREA = 100  # 根据需要调整该值
+    MIN_CONTOUR_AREA = 100 
 
-    ear_rotation_marks = []  # 初始化每个类的多边列表
+    ear_rotation_marks = []
 
-    # 设置色调值
     hsv_colors = [np.array([90, 245, 135])]
 
     for hsv_color in hsv_colors:
-        # 定义颜色范围
         lower_bound = np.array(hsv_color) - np.array([10, 10, 120])
         upper_bound = np.array(hsv_color) + np.array([10, 10, 120])
 
-        # 创建蒙版
         mask = cv.inRange(image_hsv, lower_bound, upper_bound)
 
-        # 查找颜色区域的轮廓
         contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
         for contour in contours:
-            # 根据面积过滤小轮廓
             area = cv.contourArea(contour)
-            if area >= MIN_CONTOUR_AREA:  # 保留大于最小面积的轮廓
-                polygon = Polygon(contour[:, 0, :])  # 创建多边形
-                ear_rotation_marks.append(polygon.centroid.x)  # 获取叶节点的高度---这里的坐标原点在左下
+            if area >= MIN_CONTOUR_AREA:  
+                polygon = Polygon(contour[:, 0, :]) 
+                ear_rotation_marks.append(polygon.centroid.x) 
 
-    # Extract the head and tail elements
     ear_rotation_marks.sort()
     if len(ear_rotation_marks) >= 7:
         marker_dis = int(ear_rotation_marks[6]) - int(ear_rotation_marks[0])
@@ -78,14 +66,12 @@ def extract_ear_rotation_marks(image_file):
         return 420
 
 def process_file(full_run_with_extension, pic_path, model_path, image_undistort_parameters, ear_center):
-    # Remove file extension
     run = os.path.basename(full_run_with_extension).split('.')[0]
     full_run = os.path.normpath(os.path.join(os.path.dirname(full_run_with_extension), run))
 
     ears_dir = os.path.join(pic_path, 'ear')
     projections_dir = os.path.join(pic_path, 'projection')
 
-    # Import video processing functions
     import sys
     sys.path.append(model_path)
     from camera_functions import undistort_and_resize_image
@@ -170,7 +156,6 @@ if __name__ == '__main__':
     os.makedirs(ear_dir, exist_ok=True)
     os.makedirs(projection_dir, exist_ok=True)
 
-    # 导入视频处理参数
     mtx = np.load(os.path.join(args.parameter_folder, "HQ_camera_1072_1440_mtx_dist.npz"))["x"]
     dist = np.load(os.path.join(args.parameter_folder, "HQ_camera_1072_1440_mtx_dist.npz"))["y"]
     image_undistort_parameters = [mtx, dist]

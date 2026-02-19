@@ -8,7 +8,6 @@ from tkinter import messagebox
 # Initialize GUI
 root = Tk()
 root.title('Get Phenotype')
-#root.iconbitmap('icon_images/Corn.ico')
 root.geometry('620x220') 
 
 label_input = Entry(root,borderwidth=5, font=("Helvetica", 40))
@@ -25,9 +24,7 @@ picam2.configure(video_config)
 
 
 # Define functions
-
 def Video_Recording(label):
-    
     picam2.start_and_record_video('dataset/' + label,duration=15, show_preview=True)
     picam2.stop_preview()
 
@@ -49,8 +46,6 @@ def Run():
     else:
         #label_input.delete(0,END)
         return Video_Recording(ear_label)
-
-
 
 # Make Buttons
 button_Run = Button(root, text="Run",padx=20, command=Run, font=("Helvetica", 100))

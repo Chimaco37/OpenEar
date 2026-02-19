@@ -6,7 +6,6 @@ def polygon_to_bbox(polygon):
     h = round(max_y - min_y, 7)
 
     polygon = np.array(polygon, dtype=np.float32)
-
     area = Polygon(polygon).area 
 
     return min_x, min_y, max_x, max_y, w, h, area
@@ -47,7 +46,6 @@ def pre_process_ear_label_file(ear_file_path):
             polygon.append((x, y))
 
     polygon = np.array(polygon, dtype=np.float32)
-
     return polygon
 
 #################################################### kernel traits #####################################################
@@ -429,4 +427,5 @@ if __name__ == "__main__":
                     ws.cell(row=row[0].row, column=col, value='NA') 
 
     wb.save(output_file)
+
 
